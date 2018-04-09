@@ -1,0 +1,37 @@
+#!/bin/bash
+
+PASSWORD=""
+
+case $1 in
+  create)
+  #CREATE VTN 1 AND 2
+  curl --user "admin":"$PASSWORD" -H "Content-type: application/json" -X POST http://192.168.103.142:8181/restconf/operations/vtn:update-vtn -d '{"input":{"tenant-name":"vtn1"}}'
+  curl --user "admin":"$PASSWORD" -H "Content-type: application/json" -X POST http://192.168.103.142:8181/restconf/operations/vtn:update-vtn -d '{"input":{"tenant-name":"vtn2"}}'
+  #CREATE VBR
+  curl --user "admin":"$PASSWORD" -H "Content-type: application/json" -X POST http://192.168.103.142:8181/restconf/operations/vtn-vbridge:update-vbridge -d '{"input":{"tenant-name":"vtn1", "bridge-name":"vbr1"}}'
+  curl --user "admin":"$PASSWORD" -H "Content-type: application/json" -X POST http://192.168.103.142:8181/restconf/operations/vtn-vbridge:update-vbridge -d '{"input":{"tenant-name":"vtn1", "bridge-name":"vbr2"}}'
+  curl --user "admin":"$PASSWORD" -H "Content-type: application/json" -X POST http://192.168.103.142:8181/restconf/operations/vtn-vbridge:update-vbridge -d '{"input":{"tenant-name":"vtn2", "bridge-name":"vbr3"}}'
+  #CREATE IFACE
+  curl --user "admin":"$PASSWORD" -H "Content-type: application/json" -X POST http://192.168.103.142:8181/restconf/operations/vtn-vinterface:update-vinterface -d '{"input":{"tenant-name":"vtn1", "bridge-name":"vbr1", "interface-name":"if111"}}'
+  curl --user "admin":"$PASSWORD" -H "Content-type: application/json" -X POST http://192.168.103.142:8181/restconf/operations/vtn-vinterface:update-vinterface -d '{"input":{"tenant-name":"vtn1", "bridge-name":"vbr2", "interface-name":"if121"}}'
+  curl --user "admin":"$PASSWORD" -H "Content-type: application/json" -X POST http://192.168.103.142:8181/restconf/operations/vtn-vinterface:update-vinterface -d '{"input":{"tenant-name":"vtn2", "bridge-name":"vbr3", "interface-name":"if231"}}'
+  #BIND IFACE
+  curl --user "admin":"$PASSWORD" -H "Content-type: application/json" -X POST http://192.168.103.142:8181/restconf/operations/vtn-port-map:set-port-map -d '{"input":{"vlan-id":0,"tenant-name":"vtn1","bridge-name":"vbr2","interface-name":"if111","node":"openflow:5","port-name":"s5-eth3"}}'
+  curl --user "admin":"$PASSWORD" -H "Content-type: application/json" -X POST http://192.168.103.142:8181/restconf/operations/vtn-port-map:set-port-map -d '{"input":{"vlan-id":0,"tenant-name":"vtn1","bridge-name":"vbr1","interface-name":"if121","node":"openflow:0","port-name":"s0-eth1"}}'
+  curl --user "admin":"$PASSWORD" -H "Content-type: application/json" -X POST http://192.168.103.142:8181/restconf/operations/vtn-port-map:set-port-map -d '{"input":{"vlan-id":0,"tenant-name":"vtn2","bridge-name":"vbr3","interface-name":"if231","node":"openflow:2","port-name":"s2-eth3"}}'
+  #print VTN config
+  curl --user "admin":"$PASSWORD" -H "Content-type: application/json" -X GET http://192.168.103.142:8181/restconf/operational/vtn:vtns/ | python -m json.tool
+  #set policy
+#  curl --user "admin":"$PASSWORD" -H "Content-type: application/json" -X POST http://192.168.103.142:8181/restconf/operations/vtn-flow-condition:set-flow-condition -d '{"input":{"name":"cond_1", "vtn-flow-match":[{"vtn-ether-match":{},"vtn-inet-match":{"source-network":"192.168.0.1/32","protocol":1,"destination-network":"192.168.0.2/32"},"index":"1"}]}}'
+#  curl --user "admin":"$PASSWORD" -H "Content-type: application/json" -X POST http://192.168.103.142:8181/restconf/operations/vtn-flow-filter:set-flow-filter -d '{"input": {"tenant-name": "vtn1", "bridge-name": "vbr1","interface-name":"if111","vtn-flow-filter":[{"condition":"cond_1","vtn-drop-filter":{},"vtn-flow-action":[{"order": "1","vtn-set-inet-src-action":{"ipv4-address":"192.168.0.1/32"}},{"order": "2","vtn-set-inet-dst-action":{"ipv4-address":"192.168.0.2/32"}}],"index": "1"}]}}'
+  ;;
+
+  delete)
+  #DELETE ALL VTNS
+  curl --user "admin":"$PASSWORD" -H "Content-type: application/json" -X POST http://192.168.103.142:8181/restconf/operations/vtn:remove-vtn -d '{"input":{"tenant-name":"vtn1"}}'
+  curl --user "admin":"$PASSWORD" -H "Content-type: application/json" -X POST http://192.168.103.142:8181/restconf/operations/vtn:remove-vtn -d '{"input":{"tenant-name":"vtn2"}}'
+  #DELETE FLOW CONDITIONS
+  curl --user "admin":"$PASSWORD" -H "Content-type: application/json" -X POST http://192.168.103.142:8181/restconf/operations/vtn-flow-condition:remove-flow-condition -d '{"input":{"name":"cond_1"}}';;
+  show)
+  curl --user "admin":"$PASSWORD" -H "Content-type: application/json" -X GET http://192.168.103.142:8181/restconf/operational/vtn:vtns/ | python -m json.tool;;
+esac
